@@ -83,6 +83,29 @@ app.post('/api/login', async (req, res) => {
     }
   });
 
+  app.post('/create-checkout-session', async (req, res) => {
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: 'Your Product Name',
+            },
+            unit_amount: 1000, // Price in cents
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: 'https://example.com/success',
+      cancel_url: 'https://example.com/cancel',
+    });
+  
+    res.json({ id: session.id });
+  });
+
 // app.get('/api/users', async (req, res) => {
 //     try {
 //       const { username } = req.query;
