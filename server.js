@@ -8,7 +8,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const WebSocket = require('ws');
 
-const stripe = require('stripe')(sk_test_51MfvqQDhepDNpjvl1L9gLRfSQuj6cAIaFE0MYUCuAl5qaIlh4rci9mql1M6bYkzFbGOXnA6QUnFC5N5Mk36ua6Pp00iyG3VKPJ);
+const stripe = require('stripe')('sk_test_51MfvqQDhepDNpjvl1L9gLRfSQuj6cAIaFE0MYUCuAl5qaIlh4rci9mql1M6bYkzFbGOXnA6QUnFC5N5Mk36ua6Pp00iyG3VKPJ');
 
 const app = express();
 app.use(cors());
