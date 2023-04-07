@@ -124,7 +124,7 @@ app.post('/api/login', async (req, res) => {
         success_url: 'https://sea-lion-app-lxgr3.ondigitalocean.app/success',
         cancel_url: 'https://sea-lion-app-lxgr3.ondigitalocean.app/cancel',
       });
-      const socket = new WebSocket('wss://sea-turtle-app-l7rbe.ondigitalocean.app/create-checkout-session');
+      const socket = new WebSocket('wss://sea-lion-app-lxgr3.ondigitalocean.app:8080/ws');
       socket.on('open', () => {
         socket.send(JSON.stringify({ id: session.id }));
       });
