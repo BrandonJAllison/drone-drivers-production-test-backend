@@ -108,7 +108,18 @@ app.post('/api/login', async (req, res) => {
     try {
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ['card'],
-        line_items: req.body.lineItems,
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: 'Drone Drivers FAA Part 107 Course',
+              },
+              unit_amount: 2500,
+            },
+            quantity: 1,
+          },
+        ],
         mode: 'payment',
         success_url: 'https://sea-lion-app-lxgr3.ondigitalocean.app/success',
         cancel_url: 'https://sea-lion-app-lxgr3.ondigitalocean.app/cancel',
