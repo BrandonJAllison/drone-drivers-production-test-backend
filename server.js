@@ -104,19 +104,24 @@ app.post('/api/login', async (req, res) => {
     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
   };
   
-  app.post('/api/create-checkout-session', cors(corsOptions), (req, res) => {
-    const socket = new WebSocket('wss://sea-turtle-app-l7rbe.ondigitalocean.app/create-checkout-session');
-    socket.on('open', () => {
-      socket.send('create session');
-    });
-    socket.on('message', (message) => {
-      const data = JSON.parse(message);
-      if (data.id) {
-        res.json({ id: data.id });
-      } else {
-        res.status(500).json({ message: data.error });
-      }
-    });
+  app.post('/api/create-checkout-session', cors(corsOptions), async (req, res) => {
+    try {
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        line_items: req.body.lineItems,
+        mode: 'payment',
+        success_url: 'https://sea-lion-app-lxgr3.ondigitalocean.app/success',
+        cancel_url: 'https://sea-lion-app-lxgr3.ondigitalocean.app/cancel',
+      });
+      const socket = new WebSocket('wss://sea-turtle-app-l7rbe.ondigitalocean.app/create-checkout-session');
+      socket.on('open', () => {
+        socket.send(JSON.stringify({ id: session.id }));
+      });
+      res.json({ id: session.id });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: err.message });
+    }
   });
 
   
