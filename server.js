@@ -6,6 +6,9 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo')(session);
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const WebSocket = require('ws');
+
+const stripe = require('stripe')(sk_test_51MfvqQDhepDNpjvl1L9gLRfSQuj6cAIaFE0MYUCuAl5qaIlh4rci9mql1M6bYkzFbGOXnA6QUnFC5N5Mk36ua6Pp00iyG3VKPJ);
 
 const app = express();
 app.use(cors());
@@ -25,7 +28,6 @@ app.use(session({
   saveUninitialized: false,
   store: new MongoStore({ mongooseConnection: mongoose.connection })
 }));
-
 const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
@@ -82,42 +84,41 @@ app.post('/api/login', async (req, res) => {
       res.status(500).json({ message: err.message });
     }
   });
-
-  app.post('/create-checkout-session', async (req, res) => {
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [
-        {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: 'Drone Drivers FAA Part 107 Course',
-            },
-            unit_amount: 2500, // Price in cents
-          },
-          quantity: 1,
-        },
-      ],
-      mode: 'payment',
-      success_url: 'https://example.com/success',
-      cancel_url: 'https://example.com/cancel',
-    });
+  const server = require('http').createServer(app);
+  const wss = new WebSocket.Server({ server });
   
-    res.json({ id: session.id });
+  wss.on('connection', (socket) => {
+    socket.on('message', async (message) => {
+      try {
+        const session = await stripe.checkout.sessions.create(/* ... */);
+        socket.send(JSON.stringify({ id: session.id }));
+      } catch (err) {
+        console.error(err);
+        socket.send(JSON.stringify({ error: err.message }));
+      }
+    });
   });
-
-// app.get('/api/users', async (req, res) => {
-//     try {
-//       const { username } = req.query;
-//       const user = await User.findOne({ username });
-//       if (!user) {
-//         return res.status(404).json({ message: 'User not found.' });
-//       }
-//       res.json(user);
-//     } catch (err) {
-//       console.error(err);
-//       res.status(500).json({ message: err.message });
-//     }
-//   });
-
-app.listen(port, () => console.log(`Server listening on port ${port}`));
+  
+  app.post('/create-checkout-session', (req, res) => {
+    const socket = new WebSocket('ws://sea-turtle-app-l7rbe.ondigitalocean.app//create-checkout-session');
+    socket.on('open', () => {
+      socket.send('create session');
+    });
+    socket.on('message', (message) => {
+      const data = JSON.parse(message);
+      if (data.id) {
+        res.json({ id: data.id });
+      } else {
+        res.status(500).json({ message: data.error });
+      }
+    });
+  });
+  app.get('/success', (req, res) => {
+    res.send('Success!');
+  });
+  
+  app.get('/cancel', (req, res) => {
+    res.send('Cancelled!');
+  });
+  server.listen(port, () => console.log(`Server listening on port ${port}`));
+  
