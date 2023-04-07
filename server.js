@@ -91,9 +91,9 @@ app.post('/api/login', async (req, res) => {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: 'Your Product Name',
+              name: 'Drone Drivers FAA Part 107 Course',
             },
-            unit_amount: 1000, // Price in cents
+            unit_amount: 2500, // Price in cents
           },
           quantity: 1,
         },
