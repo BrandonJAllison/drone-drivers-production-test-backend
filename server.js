@@ -100,7 +100,7 @@ app.post('/api/login', async (req, res) => {
   });
   
   app.post('/api/create-checkout-session', (req, res) => {
-    const socket = new WebSocket('ws://sea-turtle-app-l7rbe.ondigitalocean.app/create-checkout-session');
+    const socket = new WebSocket('wss://sea-turtle-app-l7rbe.ondigitalocean.app/create-checkout-session');
     socket.on('open', () => {
       socket.send('create session');
     });
