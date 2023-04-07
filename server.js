@@ -99,7 +99,12 @@ app.post('/api/login', async (req, res) => {
     });
   });
   
-  app.post('/api/create-checkout-session', (req, res) => {
+  const corsOptions = {
+    origin: 'https://sea-lion-app-lxgr3.ondigitalocean.app',
+    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+  };
+  
+  app.post('/api/create-checkout-session', cors(corsOptions), (req, res) => {
     const socket = new WebSocket('wss://sea-turtle-app-l7rbe.ondigitalocean.app/create-checkout-session');
     socket.on('open', () => {
       socket.send('create session');
@@ -113,6 +118,8 @@ app.post('/api/login', async (req, res) => {
       }
     });
   });
+
+  
   app.get('/success', (req, res) => {
     res.send('Success!');
   });
