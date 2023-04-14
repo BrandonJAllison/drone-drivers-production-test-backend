@@ -78,7 +78,9 @@ app.post('/api/login', async (req, res) => {
         return res.status(401).json({ message: 'Invalid email or password.' });
       }
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-      res.json({ firstName: user.firstName, token });
+      
+      res.json({ firstName: user.firstName, lastName: user.lastName, token });
+      console.log(res)
     } catch (err) {
       console.error(err);
       res.status(500).json({ message: err.message });
@@ -124,7 +126,7 @@ app.post('/api/login', async (req, res) => {
         success_url: 'https://sea-lion-app-lxgr3.ondigitalocean.app/success',
         cancel_url: 'https://sea-lion-app-lxgr3.ondigitalocean.app/cancel',
       });
-      const socket = new WebSocket('wss://sea-lion-app-lxgr3.ondigitalocean.app:8080/ws');
+      const socket = new WebSocket('wss://sea-turtle-app-l7rbe.ondigitalocean.app/create-checkout-session');
       socket.on('open', () => {
         socket.send(JSON.stringify({ id: session.id }));
       });
@@ -134,6 +136,8 @@ app.post('/api/login', async (req, res) => {
       res.status(500).json({ message: err.message });
     }
   });
+
+  
 
   
   app.get('/success', (req, res) => {
