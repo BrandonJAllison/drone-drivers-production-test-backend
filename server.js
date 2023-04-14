@@ -79,7 +79,7 @@ app.post('/api/login', async (req, res) => {
       }
       const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
       
-      res.json({ firstName: user.firstName, lastName: user.lastName, token });
+      res.json({ firstName: user.firstName, lastName: user.lastName, username: user.username, email: user.email, token });
       console.log(res)
     } catch (err) {
       console.error(err);
