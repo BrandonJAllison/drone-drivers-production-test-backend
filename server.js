@@ -1,151 +1,47 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const mongoose = require('mongoose');
-const session = require('express-session');
-const MongoStore = require('connect-mongo')(session);
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const WebSocket = require('ws');
-
-const stripe = require('stripe')('sk_test_51MfvqQDhepDNpjvl1L9gLRfSQuj6cAIaFE0MYUCuAl5qaIlh4rci9mql1M6bYkzFbGOXnA6QUnFC5N5Mk36ua6Pp00iyG3VKPJ');
+const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
 const app = express();
-app.use(cors());
+
+// Middleware
+app.use(express.json());
+app.use(cors({
+  // Configure CORS options as needed for your project
+  // For development, you might allow all origins or specify your frontend development server
+  origin: 'http://localhost:3000', // Adjust according to your frontend server
+}));
+
 const port = process.env.PORT || 3001;
 
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error(err));
-
-const db = mongoose.connection;
-db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-
-app.use(express.json());
-app.use(session({
-  secret: process.env.SESSION_SECRET,
-  resave: false,
-  saveUninitialized: false,
-  store: new MongoStore({ mongooseConnection: mongoose.connection })
-}));
-const userSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  firstName: { type: String },
-  lastName: { type: String },
-  username: { type: String, required: true, unique: true }
-});
-
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) { return next(); }
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-  next();
-});
-
-userSchema.methods.comparePassword = async function(candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
-};
-
-const User = mongoose.model('User', userSchema);
-
-app.post('/api/signup', async (req, res) => {
+// Route for creating a Stripe checkout session
+app.post('/api/create-checkout-session', async (req, res) => {
   try {
-    const { email, password, firstName, lastName, username } = req.body;
-    const userExists = await User.exists({ $or: [{ email }, { username }] });
-    if (userExists) {
-      return res.status(400).json({ message: 'User with this email or username already exists.' });
-    }
-    const user = new User({ email, password, firstName, lastName, username });
-    await user.save();
-    req.session.userId = user._id;
-    res.json({ message: 'User signed up and authenticated successfully.' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: err.message });
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      line_items: [{
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: 'Drone Drivers Prep Course',
+            // Add more product details here if necessary
+          },
+          unit_amount: 13900, // Price in cents, adjust as needed
+        },
+        quantity: 1,
+      }],
+      mode: 'payment',
+      success_url: 'http://localhost:3000/success?session_id={CHECKOUT_SESSION_ID}',
+      cancel_url: 'http://localhost:3000/cancel',
+    });
+
+    res.json({ id: session.id });
+  } catch (error) {
+    console.error("Error in creating checkout session:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-app.post('/api/login', async (req, res) => {
-    const { email, password } = req.body;
-    try {
-      const user = await User.findOne({ email });
-      if (!user) {
-        return res.status(401).json({ message: 'Invalid email or password.' });
-      }
-      const passwordIsValid = await bcrypt.compare(password, user.password);
-      if (!passwordIsValid) {
-        return res.status(401).json({ message: 'Invalid email or password.' });
-      }
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET);
-      
-      res.json({ firstName: user.firstName, lastName: user.lastName, username: user.username, email: user.email, token });
-      console.log(res)
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: err.message });
-    }
-  });
-  const server = require('http').createServer(app);
-  const wss = new WebSocket.Server({ server });
-  
-  wss.on('connection', (socket) => {
-    socket.on('message', async (message) => {
-      try {
-        const session = await stripe.checkout.sessions.create(/* ... */);
-        socket.send(JSON.stringify({ id: session.id }));
-      } catch (err) {
-        console.error(err);
-        socket.send(JSON.stringify({ error: err.message }));
-      }
-    });
-  });
-  
-  const corsOptions = {
-    origin: 'https://sea-lion-app-lxgr3.ondigitalocean.app',
-    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
-  };
-  
-  app.post('/api/create-checkout-session', cors(corsOptions), async (req, res) => {
-    try {
-      const session = await stripe.checkout.sessions.create({
-        payment_method_types: ['card'],
-        line_items: [
-          {
-            price_data: {
-              currency: 'usd',
-              product_data: {
-                name: 'Drone Drivers FAA Part 107 Course',
-              },
-              unit_amount: 2500,
-            },
-            quantity: 1,
-          },
-        ],
-        mode: 'payment',
-        success_url: 'https://sea-lion-app-lxgr3.ondigitalocean.app/success',
-        cancel_url: 'https://sea-lion-app-lxgr3.ondigitalocean.app/cancel',
-      });
-      const socket = new WebSocket('wss://sea-turtle-app-l7rbe.ondigitalocean.app/create-checkout-session');
-      socket.on('open', () => {
-        socket.send(JSON.stringify({ id: session.id }));
-      });
-      res.json({ id: session.id });
-    } catch (err) {
-      console.error(err);
-      res.status(500).json({ message: err.message });
-    }
-  });
-
-  
-
-  
-  app.get('/success', (req, res) => {
-    res.send('Success!');
-  });
-  
-  app.get('/cancel', (req, res) => {
-    res.send('Cancelled!');
-  });
-  server.listen(port, () => console.log(`Server listening on port ${port}`));
-  
+// Start the server
+app.listen(port, () => console.log(`Server listening on port ${port}`))
