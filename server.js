@@ -10,7 +10,7 @@ app.use(express.json());
 app.use(cors({
   // Configure CORS options as needed for your project
   // For development, you might allow all origins or specify your frontend development server
-  origin: 'http://localhost:3000', // Adjust according to your frontend server
+  origin: '*', // Adjust according to your frontend server
 }));
 
 const port = process.env.PORT || 3001;
@@ -32,8 +32,8 @@ app.post('/api/create-checkout-session', async (req, res) => {
         quantity: 1,
       }],
       mode: 'payment',
-      success_url: 'http://localhost:3000/success?session_id={CHECKOUT_SESSION_ID}',
-      cancel_url: 'http://localhost:3000/cancel',
+      success_url: 'http://app.dronedriver.com/success?session_id={CHECKOUT_SESSION_ID}',
+      cancel_url: 'http://app.dronedriver.com/cancel',
     });
 
     res.json({ id: session.id });
