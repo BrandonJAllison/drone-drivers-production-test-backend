@@ -24,7 +24,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
         price_data: {
           currency: 'usd',
           product_data: {
-            name: 'Drone Drivers Prep Course',
+            name: 'Drone Drivers Part 107 Course',
             // Add more product details here if necessary
           },
           unit_amount: 13900, // Price in cents, adjust as needed
@@ -32,8 +32,8 @@ app.post('/api/create-checkout-session', async (req, res) => {
         quantity: 1,
       }],
       mode: 'payment',
-      success_url: 'http://app.dronedriver.com/success?session_id={CHECKOUT_SESSION_ID}',
-      cancel_url: 'http://app.dronedriver.com/cancel',
+      success_url: 'http://app.dronedriver.com/profile',
+      cancel_url: 'http://app.dronedriver.com/profile',
     });
 
     res.json({ id: session.id });
