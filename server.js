@@ -3,8 +3,6 @@ const express = require('express');
 const cors = require('cors');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { Pool } = require('pg');
-const jwt = require('jsonwebtoken');
-const jwksClient = require('jwks-rsa');
 
 const app = express();
 const pool = new Pool({
@@ -20,42 +18,17 @@ app.use(cors({
     origin: '*', // Adjust according to your frontend server
 }));
 
-const client = jwksClient({
-  jwksUri: `https://cognito-idp.us-east-1.amazonaws.com/us-east-1_6qILSZXQa/.well-known/jwks.json`
-});
-
-function getKey(header, callback){
-  client.getSigningKey(header.kid, function(err, key) {
-    var signingKey = key.publicKey || key.rsaPublicKey;
-    callback(null, signingKey);
-  });
-}
-
-const verifyToken = (req, res, next) => {
-    const token = req.headers['authorization']?.split(" ")[1]; // Bearer <token>
-    if (!token) return res.status(403).send("A token is required for authentication");
-
-    jwt.verify(token, getKey, { algorithms: ['RS256'] }, function(err, decoded) {
-        if(err) {
-            console.log(err);
-            return res.status(401).json({ error: "A token is required for authentication" });
-        }
-        req.user = decoded;
-        next();
-    });
-};
-
 const port = process.env.PORT || 3001;
 
 // Route for creating a Stripe checkout session and inserting/updating the user in the database
-app.post('/api/create-checkout-session', verifyToken, async (req, res) => {
+app.post('/api/create-checkout-session', async (req, res) => {
     const { email, userId } = req.body; // Received from the frontend
 
     try {
         // Insert or update user in the database
-        await pool.query(
-            'INSERT INTO users (id, email, paid) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, paid = EXCLUDED.paid;',
-            [userId, email, false]
+        // await pool.query(
+        //     'INSERT INTO users (id, email, paid) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, paid = EXCLUDED.paid;',
+        //     [userId, email, false]
         );
 
         // Create Stripe Checkout session
