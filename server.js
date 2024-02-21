@@ -2,35 +2,20 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-const { Pool } = require('pg');
 
 const app = express();
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false,
-    },
-});
 
 // Middleware
 app.use(express.json());
 app.use(cors({
-    origin: '*', // Adjust according to your frontend server
+    origin: '*', // Adjust according to your frontend server for production
 }));
 
 const port = process.env.PORT || 3001;
 
-// Route for creating a Stripe checkout session and inserting/updating the user in the database
+// Route for creating a Stripe checkout session
 app.post('/api/create-checkout-session', async (req, res) => {
-    const { email, userId } = req.body; // Received from the frontend
-
     try {
-        // Insert or update user in the database
-        await pool.query(
-            'INSERT INTO users (id, email, paid) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, paid = EXCLUDED.paid;',
-            [userId, email, false]
-        );
-
         // Create Stripe Checkout session
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
@@ -47,14 +32,11 @@ app.post('/api/create-checkout-session', async (req, res) => {
             mode: 'payment',
             success_url: `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.FRONTEND_URL}/cancel`,
-            metadata: {
-                userId: userId, // Pass userId to Stripe for reference
-            },
         });
 
         res.json({ id: session.id });
     } catch (error) {
-        console.error("Error in creating checkout session or inserting user:", error);
+        console.error("Error in creating checkout session:", error);
         res.status(500).json({ error: error.message });
     }
 });
@@ -71,17 +53,14 @@ app.post('/api/webhook', express.raw({type: 'application/json'}), async (req, re
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
-    // Handle successful payment
+    // Handle the checkout.session.completed event
     if (event.type === 'checkout.session.completed') {
-        const session = event.data.object;
-        const userId = session.metadata.userId; // Retrieve userId from session metadata
-
-        // Update user's paid status in the database
-        await pool.query('UPDATE users SET paid = $1 WHERE id = $2', [true, userId]);
+        // Handle post-payment logic here
+        console.log('Payment was successful.');
+        // Here, you would update the user's payment status in the database
     }
 
     res.json({received: true});
 });
 
 app.listen(port, () => console.log(`Server listening on port ${port}`));
-
