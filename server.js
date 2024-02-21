@@ -38,7 +38,7 @@ const verifyToken = (req, res, next) => {
     jwt.verify(token, getKey, { algorithms: ['RS256'] }, function(err, decoded) {
         if(err) {
             console.log(err);
-            return res.status(401).send("Invalid Token");
+            return res.status(401).json({ error: "A token is required for authentication" });
         }
         req.user = decoded;
         next();
