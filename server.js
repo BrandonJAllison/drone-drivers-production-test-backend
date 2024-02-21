@@ -26,9 +26,9 @@ app.post('/api/create-checkout-session', async (req, res) => {
 
     try {
         // Insert or update user in the database
-        // await pool.query(
-        //     'INSERT INTO users (id, email, paid) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, paid = EXCLUDED.paid;',
-        //     [userId, email, false]
+        await pool.query(
+            'INSERT INTO users (id, email, paid) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email, paid = EXCLUDED.paid;',
+            [userId, email, false]
         );
 
         // Create Stripe Checkout session
@@ -45,8 +45,8 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 quantity: 1,
             }],
             mode: 'payment',
-            success_url: `https://app.dronedrivers.com/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `https://app.dronedrivers.com/cancel`,
+            success_url: `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.FRONTEND_URL}/cancel`,
             metadata: {
                 userId: userId, // Pass userId to Stripe for reference
             },
@@ -84,3 +84,4 @@ app.post('/api/webhook', express.raw({type: 'application/json'}), async (req, re
 });
 
 app.listen(port, () => console.log(`Server listening on port ${port}`));
+
