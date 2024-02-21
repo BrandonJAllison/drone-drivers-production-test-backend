@@ -4,6 +4,7 @@ const cors = require('cors');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
+const jwksClient = require('jwks-rsa');
 
 const app = express();
 const pool = new Pool({
@@ -19,23 +20,35 @@ app.use(cors({
     origin: '*', // Adjust according to your frontend server
 }));
 
+const client = jwksClient({
+  jwksUri: `https://cognito-idp.us-east-1.amazonaws.com/us-east-1_6qILSZXQa/.well-known/jwks.json`
+});
+
+function getKey(header, callback){
+  client.getSigningKey(header.kid, function(err, key) {
+    var signingKey = key.publicKey || key.rsaPublicKey;
+    callback(null, signingKey);
+  });
+}
+
 const verifyToken = (req, res, next) => {
-    const token = req.headers['authorization'];
+    const token = req.headers['authorization']?.split(" ")[1]; // Bearer <token>
     if (!token) return res.status(403).send("A token is required for authentication");
 
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    jwt.verify(token, getKey, { algorithms: ['RS256'] }, function(err, decoded) {
+        if(err) {
+            console.log(err);
+            return res.status(401).send("Invalid Token");
+        }
         req.user = decoded;
-    } catch (err) {
-        return res.status(401).send("Invalid Token");
-    }
-    return next();
+        next();
+    });
 };
 
 const port = process.env.PORT || 3001;
 
 // Route for creating a Stripe checkout session and inserting/updating the user in the database
-app.post('/api/create-checkout-session',verifyToken, async (req, res) => {
+app.post('/api/create-checkout-session', verifyToken, async (req, res) => {
     const { email, userId } = req.body; // Received from the frontend
 
     try {
@@ -59,8 +72,8 @@ app.post('/api/create-checkout-session',verifyToken, async (req, res) => {
                 quantity: 1,
             }],
             mode: 'payment',
-            success_url: `app.dronedrivers.com/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `app.dronedrivers.com/cancel`,
+            success_url: `https://app.dronedrivers.com/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `https://app.dronedrivers.com/cancel`,
             metadata: {
                 userId: userId, // Pass userId to Stripe for reference
             },
