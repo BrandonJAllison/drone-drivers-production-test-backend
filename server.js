@@ -30,8 +30,8 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 quantity: 1,
             }],
             mode: 'payment',
-            success_url: `https://www.app.dronedrivers.com/`,
-            cancel_url: `https://www.app.dronedrivers.com/cancel`,
+            success_url: `https://www.app.dronedriver.com/`,
+            cancel_url: `https://www.app.dronedriver.com/cancel`,
         });
 
         res.json({ id: session.id });
