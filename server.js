@@ -30,8 +30,8 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 quantity: 1,
             }],
             mode: 'payment',
-            success_url: `https://app.dronedrivers.com/success?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `https://app.dronedrivers.com/cancel`,
+            success_url: `https://www.app.dronedrivers.com/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `https://www.app.dronedrivers.com/cancel`,
         });
 
         res.json({ id: session.id });
@@ -50,6 +50,7 @@ app.post('/api/webhook', express.raw({type: 'application/json'}), async (req, re
     try {
         event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
     } catch (err) {
+        console.log(res)
         return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 
