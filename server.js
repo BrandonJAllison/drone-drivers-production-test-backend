@@ -23,7 +23,6 @@ app.use(cors({
 
 const port = process.env.PORT || 3001;
 
-app.use(bodyParser.json());
 
 // Sync Sequelize models
 sequelize.sync().then(() => console.log('Database & tables created!'));
