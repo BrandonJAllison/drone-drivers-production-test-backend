@@ -74,7 +74,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 price_data: {
                     currency: 'usd',
                     product_data: {
-                        name: 'Drone Drivers Part 107 Course',
+                        name: 'Drone Drivers Part 107 Test Prep Course',
                     },
                     unit_amount: 13900, // Price in cents
                 },
