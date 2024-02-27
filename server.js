@@ -13,15 +13,35 @@ app.use(cors({
     origin: '*', // Adjust according to your frontend server for production
 }));
 
-// PostgreSQL connection setup
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL, // Ensure this is set in your .env file
-    ssl: {
-        rejectUnauthorized: true
-    }
-});
+// // PostgreSQL connection setup
+// const pool = new Pool({
+//     connectionString: process.env.DATABASE_URL, // Ensure this is set in your .env file
+//     ssl: {
+//         rejectUnauthorized: true
+//     }
+// });
 
 const port = process.env.PORT || 3001;
+
+app.use(bodyParser.json());
+
+// Sync Sequelize models
+sequelize.sync().then(() => console.log('Database & tables created!'));
+
+app.post('/api/users', async (req, res) => {
+  try {
+    const { email, username } = req.body;
+    const newUser = await User.create({ email, username });
+    res.status(201).json({ message: 'User created successfully', userId: newUser.id });
+  } catch (error) {
+    console.error("Failed to create user:", error);
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      res.status(400).json({ message: "User already exists" });
+    } else {
+      res.status(500).json({ message: "Failed to create user", error: error.message });
+    }
+  }
+});
 
 // Route to check if a user has paid
 app.get('/api/user-has-paid/:userId', async (req, res) => {
