@@ -7,6 +7,7 @@ const { Pool } = require('pg');
 
 const app = express();
 
+
 // Middleware
 app.use(express.json());
 app.use(cors({
@@ -14,13 +15,15 @@ app.use(cors({
 }));
 
 // PostgreSQL connection setup
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: true
-    }
-});
+const caCertificate = fs.readFileSync('./ca-certificate.crt').toString();
 
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL, // Your database connection string
+  ssl: {
+    rejectUnauthorized: true, // This ensures that the certificate is verified
+    ca: caCertificate // Provide the CA certificate for verification
+  }
+});
 const port = process.env.PORT || 3001;
 
 app.post('/api/create-checkout-session', async (req, res) => {
