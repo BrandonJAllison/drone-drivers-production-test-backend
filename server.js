@@ -16,7 +16,7 @@ app.use(cors({
 }));
 
 
-const caCertificatePath = path.join('./ca-certificate.crt');
+const caCertificatePath = './ca-certificate.crt';
 const caCertificate = fs.readFileSync(caCertificatePath).toString();
 
 const pool = new Pool({
@@ -31,15 +31,14 @@ const port = process.env.PORT || 3001;
 
 app.post('/api/create-checkout-session', async (req, res) => {
     // Hardcoded user ID and email for testing
-    const userId = 'testUserId';
+   
     const userEmail = 'testUserEmail@example.com';
 
     try {
         // Step 1: Insert or update user in your database with hardcoded values
         const userInsertOrUpdateQuery = `
-            INSERT INTO course_purchases (id, email) VALUES ($1, $2)
-            ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email
-            RETURNING *;
+            INSERT INTO course_purchases (email) VALUES ($1)
+            
         `;
         const userResult = await pool.query(userInsertOrUpdateQuery, [userId, userEmail]);
         console.log('User inserted or updated:', userResult.rows[0]);
