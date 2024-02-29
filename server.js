@@ -36,7 +36,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
     try {
         // Step 1: Insert or update user in your database with hardcoded values
         const userInsertOrUpdateQuery = `
-            INSERT INTO users (id, email) VALUES ($1, $2)
+            INSERT INTO course_purchases (id, email) VALUES ($1, $2)
             ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email
             RETURNING *;
         `;
