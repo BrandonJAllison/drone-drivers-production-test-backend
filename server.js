@@ -13,13 +13,13 @@ app.use(cors({
     origin: '*', // Adjust according to your frontend server for production
 }));
 
-// // PostgreSQL connection setup
-// const pool = new Pool({
-//     connectionString: process.env.DATABASE_URL, // Ensure this is set in your .env file
-//     ssl: {
-//         rejectUnauthorized: true
-//     }
-// });
+// PostgreSQL connection setup
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL, // Ensure this is set in your .env file
+    ssl: {
+        rejectUnauthorized: true
+    }
+});
 
 const port = process.env.PORT || 3001;
 
@@ -67,16 +67,19 @@ app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res)
     const handleEvent = async (event) => {
         if (event.type === 'checkout.session.completed') {
             console.log('Payment was successful.');
-
+    
             const session = event.data.object; // Contains all the session information
+            // Hardcoded user_id and course_id for testing
+            const hardcodedUserId = '123'; // Example user ID
+            const hardcodedCourseId = '107'; // Example course ID, assuming this doesn't change
             const text = 'INSERT INTO course_purchases(user_id, course_id, session_id, amount_paid) VALUES($1, $2, $3, $4) RETURNING *';
             const values = [
-                session.client_reference_id, // Assuming client_reference_id is used to pass the user ID
-                '107', // Adjust with actual course ID as needed
+                hardcodedUserId, // Use hardcoded user ID
+                hardcodedCourseId, // Use hardcoded course ID
                 session.id,
                 session.amount_total
             ];
-
+    
             try {
                 const dbRes = await pool.query(text, values);
                 console.log(dbRes.rows[0]); // Log the inserted purchase
