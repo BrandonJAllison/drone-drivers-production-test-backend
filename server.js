@@ -15,12 +15,13 @@ app.use(cors({
 }));
 
 // PostgreSQL connection setup
-const caCertificate = fs.readFileSync('./ca-certificate.crt').toString();
+const caCertificatePath = path.join(__dirname, 'ca-certificate.crt');
+const caCertificate = fs.readFileSync(caCertificatePath).toString();
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL, // Your database connection string
   ssl: {
-    rejectUnauthorized: true, // This ensures that the certificate is verified
+    rejectUnauthorized: false, // This ensures that the certificate is verified
     ca: caCertificate // Provide the CA certificate for verification
   }
 });
