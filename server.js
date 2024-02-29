@@ -15,7 +15,7 @@ app.use(cors({
     origin: '*', // Adjust according to your frontend server for production
 }));
 
-PostgreSQL connection setup
+
 const caCertificatePath = path.join(__dirname, 'ca-certificate.crt');
 const caCertificate = fs.readFileSync(caCertificatePath).toString();
 
