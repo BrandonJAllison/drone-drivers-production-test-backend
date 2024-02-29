@@ -16,7 +16,7 @@ app.use(cors({
 }));
 
 
-const caCertificatePath = path.join(__dirname, 'ca-certificate.crt');
+const caCertificatePath = path.join('./ca-certificate.crt');
 const caCertificate = fs.readFileSync(caCertificatePath).toString();
 
 const pool = new Pool({
@@ -26,6 +26,7 @@ const pool = new Pool({
     ca: caCertificate // Provide the CA certificate for verification
   }
 });
+
 const port = process.env.PORT || 3001;
 
 app.post('/api/create-checkout-session', async (req, res) => {
