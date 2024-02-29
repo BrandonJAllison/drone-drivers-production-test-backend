@@ -23,47 +23,6 @@ app.use(cors({
 
 const port = process.env.PORT || 3001;
 
-
-// Sync Sequelize models
-sequelize.sync().then(() => console.log('Database & tables created!'));
-
-app.post('/api/users', async (req, res) => {
-  try {
-    const { email, username } = req.body;
-    const newUser = await User.create({ email, username });
-    res.status(201).json({ message: 'User created successfully', userId: newUser.id });
-  } catch (error) {
-    console.error("Failed to create user:", error);
-    if (error.name === 'SequelizeUniqueConstraintError') {
-      res.status(400).json({ message: "User already exists" });
-    } else {
-      res.status(500).json({ message: "Failed to create user", error: error.message });
-    }
-  }
-});
-
-// Route to check if a user has paid
-app.get('/api/user-has-paid/:userId', async (req, res) => {
-    const { userId } = req.params; // Extract userId from URL parameters
-
-    try {
-        // Query to check if there is at least one purchase record for the given user
-        const queryText = 'SELECT 1 FROM course_purchases WHERE user_id = $1 LIMIT 1';
-        const values = [userId];
-        const dbRes = await pool.query(queryText, values);
-
-        // If the query returns at least one row, it means the user has made at least one purchase
-        if (dbRes.rows.length > 0) {
-            res.json({ hasPaid: true });
-        } else {
-            res.json({ hasPaid: false });
-        }
-    } catch (error) {
-        console.error("Error checking user's payment status:", error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
-});
-
 // Route for creating a Stripe checkout session
 app.post('/api/create-checkout-session', async (req, res) => {
     try {
