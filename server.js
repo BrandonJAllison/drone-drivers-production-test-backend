@@ -140,7 +140,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
 //     res.json({received: true});
 // });
 
-app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
+app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res) => {
     try {
         // Assuming you've verified the webhook signature and parsed the event
         const event = JSON.parse(req.body);
