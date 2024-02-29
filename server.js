@@ -140,19 +140,36 @@ app.post('/api/create-checkout-session', async (req, res) => {
 //     res.json({received: true});
 // });
 
-app.post('/wh-stripe', express.raw({type: 'application/json'}), (req, res) => {
+app.post('/webhook', express.raw({type: 'application/json'}), async (req, res) => {
     try {
+        // Assuming you've verified the webhook signature and parsed the event
         const event = JSON.parse(req.body);
 
-        // Log the entire event or specific parts of it
-        console.log('Received event:', event);
-        // For more focused logging, you might log specific fields:
-        console.log(`Event type: ${event.type}`);
-        
-        res.status(200).json({received: true});
-    } catch (error) {
-        console.error('Error:', error);
-        res.status(400).send(`Webhook Error: ${error.message}`);
+        // For demonstration, let's say we react to a specific event type
+        if (event.type === 'checkout.session.completed') {
+            // Define the test email and any other info you want to insert
+            const testEmail = "webhook@example.com";
+
+            // SQL query to insert a new user
+            const queryText = 'INSERT INTO users(email) VALUES($1) RETURNING *';
+            const values = [testEmail];
+
+            try {
+                const dbRes = await pool.query(queryText, values);
+                console.log('New user created:', dbRes.rows[0]);
+                // Respond to the webhook event
+                res.json({received: true});
+            } catch (dbErr) {
+                console.error('Database error:', dbErr);
+                res.status(500).json({error: 'Internal server error'});
+            }
+        } else {
+            // Handle other event types or ignore them
+            res.json({received: true});
+        }
+    } catch (err) {
+        console.error('Webhook handling error:', err);
+        res.status(400).send(`Webhook Error: ${err.message}`);
     }
 });
 // app.post('/wh-stripe', express.raw({type: 'application/json'}), (req, res) => {
