@@ -97,49 +97,64 @@ app.post('/api/create-checkout-session', async (req, res) => {
 // });
 
 
-app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res) => {
-    const sig = req.headers['stripe-signature'];
-    let event;
+// app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res) => {
+//     const sig = req.headers['stripe-signature'];
+//     let event;
 
+//     try {
+//         event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+//     } catch (err) {
+//         console.error(`Webhook Error: ${err.message}`);
+//         return res.status(400).send(`Webhook Error: ${err.message}`);
+//     }
+
+//     // Asynchronous function to handle the event
+//     const handleEvent = async (event) => {
+//         if (event.type === 'checkout.session.completed') {
+//             console.log('Payment was successful.');
+    
+//             const session = event.data.object; // Contains all the session information
+//             // Hardcoded user_id and course_id for testing
+//             const hardcodedUserId = '123'; // Example user ID
+//             const hardcodedCourseId = '107'; // Example course ID, assuming this doesn't change
+//             const text = 'INSERT INTO course_purchases(user_id, course_id, session_id, amount_paid) VALUES($1, $2, $3, $4) RETURNING *';
+//             const values = [
+//                 hardcodedUserId, // Use hardcoded user ID
+//                 hardcodedCourseId, // Use hardcoded course ID
+//                 session.id,
+//                 session.amount_total
+//             ];
+    
+//             try {
+//                 const dbRes = await pool.query(text, values);
+//                 console.log(dbRes.rows[0]); // Log the inserted purchase
+//             } catch (err) {
+//                 console.error('Error saving purchase to database:', err);
+//             }
+//         }
+//     };
+
+//     // Call handleEvent and await its completion
+//     await handleEvent(event).catch(err => console.error('Event handling error:', err));
+
+//     res.json({received: true});
+// });
+
+app.post('/wh-stripe', express.raw({type: 'application/json'}), (req, res) => {
     try {
-        event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-    } catch (err) {
-        console.error(`Webhook Error: ${err.message}`);
-        return res.status(400).send(`Webhook Error: ${err.message}`);
+        const event = JSON.parse(req.body);
+
+        // Log the entire event or specific parts of it
+        console.log('Received event:', event);
+        // For more focused logging, you might log specific fields:
+        console.log(`Event type: ${event.type}`);
+        
+        res.status(200).json({received: true});
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(400).send(`Webhook Error: ${error.message}`);
     }
-
-    // Asynchronous function to handle the event
-    const handleEvent = async (event) => {
-        if (event.type === 'checkout.session.completed') {
-            console.log('Payment was successful.');
-    
-            const session = event.data.object; // Contains all the session information
-            // Hardcoded user_id and course_id for testing
-            const hardcodedUserId = '123'; // Example user ID
-            const hardcodedCourseId = '107'; // Example course ID, assuming this doesn't change
-            const text = 'INSERT INTO course_purchases(user_id, course_id, session_id, amount_paid) VALUES($1, $2, $3, $4) RETURNING *';
-            const values = [
-                hardcodedUserId, // Use hardcoded user ID
-                hardcodedCourseId, // Use hardcoded course ID
-                session.id,
-                session.amount_total
-            ];
-    
-            try {
-                const dbRes = await pool.query(text, values);
-                console.log(dbRes.rows[0]); // Log the inserted purchase
-            } catch (err) {
-                console.error('Error saving purchase to database:', err);
-            }
-        }
-    };
-
-    // Call handleEvent and await its completion
-    await handleEvent(event).catch(err => console.error('Event handling error:', err));
-
-    res.json({received: true});
 });
-
 // app.post('/wh-stripe', express.raw({type: 'application/json'}), (req, res) => {
 //     console.log('Webhook received:', req.body);
 //     res.status(200).send('OK');
