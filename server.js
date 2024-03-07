@@ -168,6 +168,22 @@ app.post('/api/create-checkout-session', async (req, res) => {
 
 app.get('/api/user/:userId', async (req, res) => {
     res.json({ message: "Route hit successfully" });
+    const { userId } = req.params;
+    console.log("Received userID:", userId); // Confirming userID is received
+
+    try {
+        const query = `
+            SELECT * FROM course_purchases
+            WHERE user_id = $1;
+        `;
+        const { rows } = await pool.query(query, [userId]);
+
+        console.log(rows); // Log the query result to see what's being returned
+        res.json({ message: "Query executed successfully", data: rows });
+    } catch (error) {
+        console.error("Database query error:", error);
+        res.status(500).json({ error: "Internal server error", details: error.message });
+    }
 });
 
 
