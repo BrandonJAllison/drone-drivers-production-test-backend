@@ -145,7 +145,7 @@ app.get('/api/user/:userId/hasPaid', async (req, res) => {
 
     try {
         const query = `
-            SELECT hasPaid FROM course_purchases
+            SELECT has_paid FROM course_purchases
             WHERE user_id = $1;
         `;
         const { rows } = await pool.query(query, [userId]);
@@ -156,7 +156,7 @@ app.get('/api/user/:userId/hasPaid', async (req, res) => {
 
             res.json({ hasPaid });
         } else {
-            res.status(404).json({ message: "User not found in database" });
+            res.status(404).json({ message: "User not found in database table" });
         }
     } catch (error) {
         console.error("Database query error:", error);
