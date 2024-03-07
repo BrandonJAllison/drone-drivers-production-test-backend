@@ -145,14 +145,15 @@ app.get('/api/user/:userId/hasPaid', async (req, res) => {
 
     try {
         const query = `
-            SELECT has_paid FROM course_purchases
+            SELECT * FROM course_purchases
             WHERE user_id = $1;
         `;
         const { rows } = await pool.query(query, [userId]);
 
         // Check if the user exists and has paid
         if (rows.length > 0) {
-            const hasPaid = rows[0].hasPaid;
+            // Ensure the column name matches the actual name in the database, usually lowercase
+            const hasPaid = rows[0].has_paid;
 
             res.json({ hasPaid });
         } else {
