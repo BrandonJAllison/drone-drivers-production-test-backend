@@ -142,6 +142,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
 
 app.get('/api/user/:userId/hasPaid', async (req, res) => {
     const { userId } = req.params;
+    console.log("Received userID:", userId); // Log the userID for debugging
 
     try {
         const query = `
