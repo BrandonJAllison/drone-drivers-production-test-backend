@@ -156,7 +156,7 @@ app.get('/api/user/:userId/hasPaid', async (req, res) => {
 
             res.json({ hasPaid });
         } else {
-            res.status(404).json({ message: "User not found" });
+            res.status(404).json({ message: "User not found in database" });
         }
     } catch (error) {
         console.error("Database query error:", error);
