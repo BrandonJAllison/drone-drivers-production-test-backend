@@ -145,7 +145,7 @@ app.get('/api/user/:userId/hasPaid', async (req, res) => {
 
     try {
         const query = `
-            SELECT has_paid FROM course_purchases
+            SELECT hasPaid FROM course_purchases
             WHERE user_id = $1;
         `;
         const { rows } = await pool.query(query, [userId]);
