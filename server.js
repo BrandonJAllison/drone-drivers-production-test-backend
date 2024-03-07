@@ -182,7 +182,7 @@ app.get('/api/user/:userId', async (req, res) => {
         res.json({ message: "Query executed successfully", data: rows });
     } catch (error) {
         console.error("Database query error:", error);
-        res.status(500).json({ error: "Internal server error", details: error.message });
+        res.status(500).json({ error: "Internal server error detected", details: error.message });
     }
 });
 
