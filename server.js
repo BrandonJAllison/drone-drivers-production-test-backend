@@ -140,30 +140,34 @@ app.post('/api/create-checkout-session', async (req, res) => {
 //     res.json({received: true});
 // });
 
-app.get('/api/user/:userId/hasPaid', async (req, res) => {
-    const { userId } = req.params;
-    console.log("Received userID:", userId); // Log the userID for debugging
+// app.get('/api/user/:userId', async (req, res) => {
+//     const { userId } = req.params;
+//     console.log("Received userID:", userId); // Log the userID for debugging
 
-    try {
-        const query = `
-            SELECT * FROM course_purchases
-            WHERE user_id = $1;
-        `;
-        const { rows } = await pool.query(query, [userId]);
+//     try {
+//         const query = `
+//             SELECT * FROM course_purchases
+//             WHERE user_id = $1;
+//         `;
+//         const { rows } = await pool.query(query, [userId]);
 
-        // Check if the user exists and has paid
-        if (rows.length > 0) {
-            // Ensure the column name matches the actual name in the database, usually lowercase
-            const hasPaid = rows[0].has_paid;
+//         // Check if the user exists and has paid
+//         if (rows.length > 0) {
+//             // Ensure the column name matches the actual name in the database, usually lowercase
+//             const hasPaid = rows[0].has_paid;
 
-            res.json({ hasPaid });
-        } else {
-            res.status(404).json({ message: "User not found in database" });
-        }
-    } catch (error) {
-        console.error("Database query error:", error);
-        res.status(500).json({ error: "Internal server error" });
-    }
+//             res.json({ hasPaid });
+//         } else {
+//             res.status(404).json({ message: "User not found in database" });
+//         }
+//     } catch (error) {
+//         console.error("Database query error:", error);
+//         res.status(500).json({ error: "Internal server error" });
+//     }
+// });
+
+app.get('/api/user/:userId', async (req, res) => {
+    res.json({ message: "Route hit successfully" });
 });
 
 
