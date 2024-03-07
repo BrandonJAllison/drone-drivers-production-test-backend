@@ -58,7 +58,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
             }],
             mode: 'payment',
             success_url: `https://www.app.dronedriver.com/success`,
-            cancel_url: `https://www.app.dronedriver.com/cancel`,
+            cancel_url: `https://www.app.dronedriver.com/profile`,
         });
 
         res.json({ id: session.id });
@@ -139,6 +139,30 @@ app.post('/api/create-checkout-session', async (req, res) => {
 
 //     res.json({received: true});
 // });
+
+app.get('/api/user/:userId/hasPaid', async (req, res) => {
+    const { userId } = req.params;
+
+    try {
+        const query = `
+            SELECT has_paid FROM users
+            WHERE user_id = $1;
+        `;
+        const { rows } = await pool.query(query, [userId]);
+
+        // Check if the user exists and has paid
+        if (rows.length > 0) {
+            const hasPaid = rows[0].hasPaid;
+
+            res.json({ hasPaid });
+        } else {
+            res.status(404).json({ message: "User not found" });
+        }
+    } catch (error) {
+        console.error("Database query error:", error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
 
 app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res) => {
     try {
