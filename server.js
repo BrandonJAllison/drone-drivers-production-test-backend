@@ -164,6 +164,7 @@ app.get('/api/user/:userId/hasPaid', async (req, res) => {
     }
 });
 
+
 app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res) => {
     try {
         // Assuming you've verified the webhook signature and parsed the event
@@ -175,7 +176,7 @@ app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res)
             const testEmail = "webhook@example.com";
 
             // SQL query to insert a new user
-            const queryText = 'INSERT INTO users(email) VALUES($1) RETURNING *';
+            const queryText = 'INSERT INTO course_purchases(email) VALUES($1) RETURNING *';
             const values = [testEmail];
 
             try {
