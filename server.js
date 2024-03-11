@@ -58,7 +58,6 @@ app.post('/api/create-checkout-session', async (req, res) => {
             }],
             mode: 'payment',
             metadata: { userID },
-            customer_email: userEmail,
             success_url: `https://www.app.dronedriver.com/success`,
             cancel_url: `https://www.app.dronedriver.com/`,
         });
