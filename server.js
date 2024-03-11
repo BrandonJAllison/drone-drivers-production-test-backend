@@ -30,14 +30,14 @@ const pool = new Pool({
 const port = process.env.PORT || 3001;
 
 app.post('/api/create-checkout-session', async (req, res) => {
-    console.log('this is the req body', req.body);
+    console.log('Received payload:', req.body); // Log the body
     // const { userID} = req.body;
     // console.log('userID:', userID && userID);
 
     try {
       
         const userInsertOrUpdateQuery = `
-            INSERT INTO course_purchases (user_id) VALUES ($1)
+            INSERT INTO course_purchases(user_id) VALUES ($1)
             
         `;
         const userResult = await pool.query(userInsertOrUpdateQuery);
@@ -57,7 +57,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 quantity: 1,
             }],
             mode: 'payment',
-            // metadata: { userID },
+            metadata: { userID },
             success_url: `https://www.app.dronedriver.com/success`,
             cancel_url: `https://www.app.dronedriver.com/`,
         });
@@ -179,7 +179,7 @@ app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res)
 
             // SQL query to insert or update the user
             const queryText = `
-                INSERT INTO course_purchases (user_id, email) VALUES ($1, $2)
+                INSERT INTO course_purchases (user_id, userEmail) VALUES ($1, $2)
                 ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email
                 RETURNING *;
             `;
