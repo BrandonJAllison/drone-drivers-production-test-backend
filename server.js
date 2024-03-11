@@ -30,9 +30,9 @@ const pool = new Pool({
 const port = process.env.PORT || 3001;
 
 app.post('/api/create-checkout-session', async (req, res) => {
-    // Hardcoded user ID and email for testing
    
-    console.log('userID:', userID);
+    const { userID} = req.body;
+    console.log('userID:', userID && userID);
 
     try {
         // Step 1: Insert or update user in your database with hardcoded values
