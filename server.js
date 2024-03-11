@@ -181,7 +181,7 @@ app.post('/api/test', (req, res) => {
             const userEmail = session.customer_email; // Customer's email address
             const amountPaid = session.amount_total; // Total amount paid
             const sessionID = session.id; // Checkout session ID
-            const courseID = 'FAA107'; // Course ID
+            const courseID = 'FAA107'; // Course ID hardcoded as 'FAA107'
             const hasPaid = true; // Since the checkout was completed successfully
 
             console.log(session.metadata);
@@ -191,13 +191,14 @@ app.post('/api/test', (req, res) => {
                 INSERT INTO course_purchases (user_id, email, amount_paid, session_id, course_id, has_paid)
                 VALUES ($1, $2, $3, $4, $5, $6)
                 ON CONFLICT (user_id) DO UPDATE SET
-                email = EXCLUDED.email,
-                amount_paid = EXCLUDED.amount_paid,
-                session_id = EXCLUDED.session_id,
-                course_id = EXCLUDED.course_id,
-                has_paid = EXCLUDED.has_paid
+                    email = EXCLUDED.email,
+                    amount_paid = EXCLUDED.amount_paid,
+                    session_id = EXCLUDED.session_id,
+                    course_id = EXCLUDED.course_id,
+                    has_paid = EXCLUDED.has_paid
                 RETURNING *;
             `;
+            // Correctly defining the values array once
             const values = [userID, userEmail, amountPaid, sessionID, courseID, hasPaid];
 
             try {
