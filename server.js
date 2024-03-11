@@ -31,22 +31,19 @@ const port = process.env.PORT || 3001;
 
 app.post('/api/create-checkout-session', async (req, res) => {
     console.log('Received payload:', req.body); // Log the body
-    
-    // Correctly assigning a hardcoded dummy userID
-    const userID = 'dummyUserID-12345';
-
-    console.log('Using hardcoded userID:', userID);
+    const { userID } = req.body; // Extract userID from the request body
 
     try {
         // Assuming you have already connected to your database and have the `pool` variable set up correctly
         const userInsertOrUpdateQuery = `
             INSERT INTO course_purchases(user_id) VALUES ($1)
+            ON CONFLICT (user_id) DO NOTHING; // Adjust based on your table schema and requirements
         `;
-        // Execute the query with the hardcoded userID
+        // Execute the query with the userID passed from the frontend
         const userResult = await pool.query(userInsertOrUpdateQuery, [userID]);
         console.log('User inserted or updated in course_purchases:', userResult);
 
-        // Proceed to create Stripe Checkout session with the hardcoded userID
+        // Proceed to create Stripe Checkout session, passing the userID in metadata for tracking
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [{
@@ -60,7 +57,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 quantity: 1,
             }],
             mode: 'payment',
-            metadata: { userID }, // Pass the hardcoded userID in metadata for tracking
+            metadata: { userID },
             success_url: `https://www.app.dronedriver.com/success`,
             cancel_url: `https://www.app.dronedriver.com/cancel`,
         });
@@ -72,7 +69,6 @@ app.post('/api/create-checkout-session', async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
 // app.post('/api/create-checkout-session', async (req, res) => {
 //     const { userID, userEmail } = req.body; // Assume these are passed from the frontend
 
@@ -136,86 +132,31 @@ app.get('/api/user/:userId', async (req, res) => {
 });
 
 
-// app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res) => {
-//     try {
-//         // Assuming you've verified the webhook signature and parsed the event
-//         const event = JSON.parse(req.body);
-
-//         // For demonstration, let's say we react to a specific event type
-//         if (event.type === 'checkout.session.completed') {
-//             // Define the test email and any other info you want to insert
-//             const testEmail = "webhook@example.com";
-
-//             // SQL query to insert a new user
-//             const queryText = 'INSERT INTO course_purchases(email) VALUES($1) RETURNING *';
-//             const values = [testEmail];
-
-//             try {
-//                 const dbRes = await pool.query(queryText, values);
-//                 console.log('New user created:', dbRes.rows[0]);
-//                 // Respond to the webhook event
-//                 res.json({received: true});
-//             } catch (dbErr) {
-//                 console.error('Database error:', dbErr);
-//                 res.status(500).json({error: 'Internal server error'});
-//             }
-//         } else {
-//             // Handle other event types or ignore them
-//             res.json({received: true});
-//         }
-//     } catch (err) {
-//         console.error('Webhook handling error:', err);
-//         res.status(400).send(`Webhook Error: ${err.message}`);
-//     }
-// });
-
-app.post('/api/test', (req, res) => {
-    console.log('Received the followingpayload:', req.body); // Log the received payload
-    res.status(200).json({ message: 'Payload received successfully', receivedPayload: req.body });
-
-  });
-
-
-  app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res) => {
-    console.log('Received webhook event:');
+app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res) => {
     try {
+        // Assuming you've verified the webhook signature and parsed the event
         const event = JSON.parse(req.body);
 
+        // For demonstration, let's say we react to a specific event type
         if (event.type === 'checkout.session.completed') {
-            const session = event.data.object; // The checkout session object
-            const userID = session.metadata.userID; // Retrieve userID from metadata
-            const userEmail = session.customer_email; // Customer's email address
-            const amountPaid = session.amount_total; // Total amount paid
-            const sessionID = session.id; // Checkout session ID
-            const courseID = 'FAA107'; // Course ID hardcoded as 'FAA107'
-            const hasPaid = true; // Since the checkout was completed successfully
+            // Define the test email and any other info you want to insert
+            const testEmail = "webhook@example.com";
 
-            console.log(session.metadata);
-
-            // SQL query to insert or update the user's purchase record
-            const queryText = `
-                INSERT INTO course_purchases (user_id, email, amount_paid, session_id, course_id, has_paid)
-                VALUES ($1, $2, $3, $4, $5, $6)
-                ON CONFLICT (user_id) DO UPDATE SET
-                    email = EXCLUDED.email,
-                    amount_paid = EXCLUDED.amount_paid,
-                    session_id = EXCLUDED.session_id,
-                    course_id = EXCLUDED.course_id,
-                    has_paid = EXCLUDED.has_paid
-                RETURNING *;
-            `;
-            // Correctly defining the values array once
-            const values = [userID, userEmail, amountPaid, sessionID, courseID, hasPaid];
+            // SQL query to insert a new user
+            const queryText = 'INSERT INTO course_purchases(email) VALUES($1) RETURNING *';
+            const values = [testEmail];
 
             try {
                 const dbRes = await pool.query(queryText, values);
-                console.log('User purchase record created or updated from webhook:', dbRes.rows[0]);
+                console.log('New user created:', dbRes.rows[0]);
+                // Respond to the webhook event
                 res.json({received: true});
             } catch (dbErr) {
                 console.error('Database error:', dbErr);
                 res.status(500).json({error: 'Internal server error'});
             }
         } else {
+            // Handle other event types or ignore them
             res.json({received: true});
         }
     } catch (err) {
@@ -223,5 +164,60 @@ app.post('/api/test', (req, res) => {
         res.status(400).send(`Webhook Error: ${err.message}`);
     }
 });
+
+// app.post('/api/test', (req, res) => {
+//     console.log('Received the followingpayload:', req.body); // Log the received payload
+//     res.status(200).json({ message: 'Payload received successfully', receivedPayload: req.body });
+
+//   });
+
+
+//   app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res) => {
+//     console.log('Received webhook event:');
+//     try {
+//         const event = JSON.parse(req.body);
+
+//         if (event.type === 'checkout.session.completed') {
+//             const session = event.data.object; // The checkout session object
+//             const userID = session.metadata.userID; // Retrieve userID from metadata
+//             const userEmail = session.customer_email; // Customer's email address
+//             const amountPaid = session.amount_total; // Total amount paid
+//             const sessionID = session.id; // Checkout session ID
+//             const courseID = 'FAA107'; // Course ID hardcoded as 'FAA107'
+//             const hasPaid = true; // Since the checkout was completed successfully
+
+//             console.log(session.metadata);
+
+//             // SQL query to insert or update the user's purchase record
+//             const queryText = `
+//                 INSERT INTO course_purchases (user_id, email, amount_paid, session_id, course_id, has_paid)
+//                 VALUES ($1, $2, $3, $4, $5, $6)
+//                 ON CONFLICT (user_id) DO UPDATE SET
+//                     email = EXCLUDED.email,
+//                     amount_paid = EXCLUDED.amount_paid,
+//                     session_id = EXCLUDED.session_id,
+//                     course_id = EXCLUDED.course_id,
+//                     has_paid = EXCLUDED.has_paid
+//                 RETURNING *;
+//             `;
+//             // Correctly defining the values array once
+//             const values = [userID, userEmail, amountPaid, sessionID, courseID, hasPaid];
+
+//             try {
+//                 const dbRes = await pool.query(queryText, values);
+//                 console.log('User purchase record created or updated from webhook:', dbRes.rows[0]);
+//                 res.json({received: true});
+//             } catch (dbErr) {
+//                 console.error('Database error:', dbErr);
+//                 res.status(500).json({error: 'Internal server error'});
+//             }
+//         } else {
+//             res.json({received: true});
+//         }
+//     } catch (err) {
+//         console.error('Webhook handling error:', err);
+//         res.status(400).send(`Webhook Error: ${err.message}`);
+//     }
+// });
 
 app.listen(port, () => console.log(`Server listening on port ${port}`));
