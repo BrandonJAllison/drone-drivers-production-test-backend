@@ -172,6 +172,7 @@ app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res)
         if (event.type === 'checkout.session.completed') {
             const session = event.data.object; // The checkout session object
             const userID = session.metadata.userID; // Retrieve userID from metadata
+            console.log (session.metadata);
 
             // Now, use the userID to insert or update the user in your database
             // Assuming you have a logic to determine what other information needs to be updated/inserted
