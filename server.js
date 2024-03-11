@@ -35,7 +35,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
     console.log('userID:', userID && userID);
 
     try {
-        Step 1: Insert or update user in your database with hardcoded values
+      
         const userInsertOrUpdateQuery = `
             INSERT INTO course_purchases (user_id) VALUES ($1)
             
