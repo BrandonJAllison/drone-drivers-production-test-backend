@@ -165,6 +165,11 @@ app.get('/api/user/:userId', async (req, res) => {
 //     }
 // });
 
+app.post('/api/test', (req, res) => {
+    console.log('Received payload:', req.body); // Log the received payload
+    res.status(200).json({ message: 'Payload received successfully', receivedPayload: req.body });
+  });
+
 app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res) => {
     try {
         const event = JSON.parse(req.body);
