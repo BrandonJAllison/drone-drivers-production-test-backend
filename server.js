@@ -31,7 +31,7 @@ const port = process.env.PORT || 3001;
 
 app.post('/api/create-checkout-session', async (req, res) => {
     console.log('Received payload:', req.body); // Log the body
-    const { userID } = req.body;
+    const { userID } = '112345';
     // console.log('userID:', userID && userID);
 
     try {
