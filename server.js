@@ -19,59 +19,31 @@ app.use(cors({
 const caCertificatePath = './ca-certificate.crt';
 const caCertificate = fs.readFileSync(caCertificatePath).toString();
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL, // Your database connection string
-  ssl: {
-    rejectUnauthorized: false, // This ensures that the certificate is verified
-    ca: caCertificate // Provide the CA certificate for verification
-  }
-});
+// const pool = new Pool({
+//   connectionString: process.env.DATABASE_URL, // Your database connection string
+//   ssl: {
+//     rejectUnauthorized: false, // This ensures that the certificate is verified
+//     ca: caCertificate // Provide the CA certificate for verification
+//   }
+// });
 
-const port = process.env.PORT || 3001;
+// const port = process.env.PORT || 3001;
 
-app.post('/api/create-checkout-session', async (req, res) => {
-    // Hardcoded user ID and email for testing
-   
-    const userEmail = 'testUserEmail@example.com';
-
-    try {
-        // Step 1: Insert or update user in your database with hardcoded values
-        const userInsertOrUpdateQuery = `
-            INSERT INTO course_purchases (email) VALUES ($1)
-            
-        `;
-        const userResult = await pool.query(userInsertOrUpdateQuery, [userEmail]);
-        console.log('User inserted or updated:', userResult.rows[0]);
-
-        // Step 2: Proceed to create Stripe Checkout session
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            line_items: [{
-                price_data: {
-                    currency: 'usd',
-                    product_data: {
-                        name: 'Drone Drivers Part 107 Test Prep Course',
-                    },
-                    unit_amount: 13900, // Price in cents
-                },
-                quantity: 1,
-            }],
-            mode: 'payment',
-            success_url: `https://www.app.dronedriver.com/success`,
-            cancel_url: `https://www.app.dronedriver.com/`,
-        });
-
-        res.json({ id: session.id });
-    } catch (error) {
-        console.error("Error:", error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Route for creating a Stripe checkout session
 // app.post('/api/create-checkout-session', async (req, res) => {
+//     // Hardcoded user ID and email for testing
+   
+//     const userEmail = 'testUserEmail@example.com';
+
 //     try {
-//         // Create Stripe Checkout session
+//         // Step 1: Insert or update user in your database with hardcoded values
+//         const userInsertOrUpdateQuery = `
+//             INSERT INTO course_purchases (email) VALUES ($1)
+            
+//         `;
+//         const userResult = await pool.query(userInsertOrUpdateQuery, [userEmail]);
+//         console.log('User inserted or updated:', userResult.rows[0]);
+
+//         // Step 2: Proceed to create Stripe Checkout session
 //         const session = await stripe.checkout.sessions.create({
 //             payment_method_types: ['card'],
 //             line_items: [{
@@ -86,85 +58,56 @@ app.post('/api/create-checkout-session', async (req, res) => {
 //             }],
 //             mode: 'payment',
 //             success_url: `https://www.app.dronedriver.com/success`,
-//             cancel_url: `https://www.app.dronedriver.com/cancel`,
+//             cancel_url: `https://www.app.dronedriver.com/`,
 //         });
 
 //         res.json({ id: session.id });
 //     } catch (error) {
-//         console.error("Error in creating checkout session:", error);
+//         console.error("Error:", error);
 //         res.status(500).json({ error: error.message });
 //     }
 // });
 
+app.post('/api/create-checkout-session', async (req, res) => {
+    const { userID, userEmail } = req.body; // Assume these are passed from the frontend
 
-// app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res) => {
-//     const sig = req.headers['stripe-signature'];
-//     let event;
+    try {
+        // Step 1: Insert or update user in your database
+        // Modify your query to use the userID for insert/update operation
+        const userInsertOrUpdateQuery = `
+            INSERT INTO course_purchases (user_id, email) VALUES ($1, $2)
+            ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email;
+        `;
+        const userResult = await pool.query(userInsertOrUpdateQuery, [userID, userEmail]);
+        console.log('User inserted or updated:', userResult.rows[0]);
 
-//     try {
-//         event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
-//     } catch (err) {
-//         console.error(`Webhook Error: ${err.message}`);
-//         return res.status(400).send(`Webhook Error: ${err.message}`);
-//     }
+        // Step 2: Proceed to create Stripe Checkout session with metadata
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card'],
+            line_items: [{
+                price_data: {
+                    currency: 'usd',
+                    product_data: {
+                        name: 'Drone Drivers Part 107 Test Prep Course',
+                    },
+                    unit_amount: 13900, // Price in cents
+                },
+                quantity: 1,
+            }],
+            mode: 'payment',
+            metadata: { userID }, // Include userID in session metadata for later reference
+            success_url: `https://www.app.dronedriver.com/success`,
+            cancel_url: `https://www.app.dronedriver.com/`,
+        });
 
-//     // Asynchronous function to handle the event
-//     const handleEvent = async (event) => {
-//         if (event.type === 'checkout.session.completed') {
-//             console.log('Payment was successful.');
-    
-//             const session = event.data.object; // Contains all the session information
-//             // Hardcoded user_id and course_id for testing
-//             const hardcodedUserId = '123'; // Example user ID
-//             const hardcodedCourseId = '107'; // Example course ID, assuming this doesn't change
-//             const text = 'INSERT INTO course_purchases(user_id, course_id, session_id, amount_paid) VALUES($1, $2, $3, $4) RETURNING *';
-//             const values = [
-//                 hardcodedUserId, // Use hardcoded user ID
-//                 hardcodedCourseId, // Use hardcoded course ID
-//                 session.id,
-//                 session.amount_total
-//             ];
-    
-//             try {
-//                 const dbRes = await pool.query(text, values);
-//                 console.log(dbRes.rows[0]); // Log the inserted purchase
-//             } catch (err) {
-//                 console.error('Error saving purchase to database:', err);
-//             }
-//         }
-//     };
+        res.json({ id: session.id });
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
-//     // Call handleEvent and await its completion
-//     await handleEvent(event).catch(err => console.error('Event handling error:', err));
 
-//     res.json({received: true});
-// });
-
-// app.get('/api/user/:userId', async (req, res) => {
-//     const { userId } = req.params;
-//     console.log("Received userID:", userId); // Log the userID for debugging
-
-//     try {
-//         const query = `
-//             SELECT * FROM course_purchases
-//             WHERE user_id = $1;
-//         `;
-//         const { rows } = await pool.query(query, [userId]);
-
-//         // Check if the user exists and has paid
-//         if (rows.length > 0) {
-//             // Ensure the column name matches the actual name in the database, usually lowercase
-//             const hasPaid = rows[0].has_paid;
-
-//             res.json({ hasPaid });
-//         } else {
-//             res.status(404).json({ message: "User not found in database" });
-//         }
-//     } catch (error) {
-//         console.error("Database query error:", error);
-//         res.status(500).json({ error: "Internal server error" });
-//     }
-// });
 
 app.get('/api/user/:userId', async (req, res) => {
     // res.json({ message: "Route hit successfully" });
@@ -187,31 +130,68 @@ app.get('/api/user/:userId', async (req, res) => {
 });
 
 
+// app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res) => {
+//     try {
+//         // Assuming you've verified the webhook signature and parsed the event
+//         const event = JSON.parse(req.body);
+
+//         // For demonstration, let's say we react to a specific event type
+//         if (event.type === 'checkout.session.completed') {
+//             // Define the test email and any other info you want to insert
+//             const testEmail = "webhook@example.com";
+
+//             // SQL query to insert a new user
+//             const queryText = 'INSERT INTO course_purchases(email) VALUES($1) RETURNING *';
+//             const values = [testEmail];
+
+//             try {
+//                 const dbRes = await pool.query(queryText, values);
+//                 console.log('New user created:', dbRes.rows[0]);
+//                 // Respond to the webhook event
+//                 res.json({received: true});
+//             } catch (dbErr) {
+//                 console.error('Database error:', dbErr);
+//                 res.status(500).json({error: 'Internal server error'});
+//             }
+//         } else {
+//             // Handle other event types or ignore them
+//             res.json({received: true});
+//         }
+//     } catch (err) {
+//         console.error('Webhook handling error:', err);
+//         res.status(400).send(`Webhook Error: ${err.message}`);
+//     }
+// });
+
 app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res) => {
     try {
-        // Assuming you've verified the webhook signature and parsed the event
         const event = JSON.parse(req.body);
 
-        // For demonstration, let's say we react to a specific event type
         if (event.type === 'checkout.session.completed') {
-            // Define the test email and any other info you want to insert
-            const testEmail = "webhook@example.com";
+            const session = event.data.object; // The checkout session object
+            const userID = session.metadata.userID; // Retrieve userID from metadata
 
-            // SQL query to insert a new user
-            const queryText = 'INSERT INTO course_purchases(email) VALUES($1) RETURNING *';
-            const values = [testEmail];
+            // Now, use the userID to insert or update the user in your database
+            // Assuming you have a logic to determine what other information needs to be updated/inserted
+            const userEmail = session.customer_email; // Example of retrieving additional info from the session
+
+            // SQL query to insert or update the user
+            const queryText = `
+                INSERT INTO course_purchases (user_id, email) VALUES ($1, $2)
+                ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email
+                RETURNING *;
+            `;
+            const values = [userID, userEmail];
 
             try {
                 const dbRes = await pool.query(queryText, values);
-                console.log('New user created:', dbRes.rows[0]);
-                // Respond to the webhook event
+                console.log('User created or updated from webhook:', dbRes.rows[0]);
                 res.json({received: true});
             } catch (dbErr) {
                 console.error('Database error:', dbErr);
                 res.status(500).json({error: 'Internal server error'});
             }
         } else {
-            // Handle other event types or ignore them
             res.json({received: true});
         }
     } catch (err) {
@@ -219,9 +199,5 @@ app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res)
         res.status(400).send(`Webhook Error: ${err.message}`);
     }
 });
-// app.post('/wh-stripe', express.raw({type: 'application/json'}), (req, res) => {
-//     console.log('Webhook received:', req.body);
-//     res.status(200).send('OK');
-// });
 
 app.listen(port, () => console.log(`Server listening on port ${port}`));
