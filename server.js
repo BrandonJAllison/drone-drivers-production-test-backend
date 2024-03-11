@@ -41,7 +41,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
         // Assuming you have already connected to your database and have the `pool` variable set up correctly
         const userInsertOrUpdateQuery = `
             INSERT INTO course_purchases(user_id) VALUES ($1)
-            ON CONFLICT (user_id) DO NOTHING; // Adjust based on your table's unique constraints and desired behavior
+            ON CONFLICT (user_id) DO NOTHING; 
         `;
         // Execute the query with the hardcoded userID
         const userResult = await pool.query(userInsertOrUpdateQuery, [userID]);
