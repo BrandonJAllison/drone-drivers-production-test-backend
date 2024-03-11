@@ -31,19 +31,23 @@ const port = process.env.PORT || 3001;
 
 app.post('/api/create-checkout-session', async (req, res) => {
     console.log('Received payload:', req.body); // Log the body
-    const { userID } = '112345';
-    // console.log('userID:', userID && userID);
+    
+    // Correctly assigning a hardcoded dummy userID
+    const userID = 'dummyUserID-12345';
+
+    console.log('Using hardcoded userID:', userID);
 
     try {
-      
+        // Assuming you have already connected to your database and have the `pool` variable set up correctly
         const userInsertOrUpdateQuery = `
             INSERT INTO course_purchases(user_id) VALUES ($1)
-            
+            ON CONFLICT (user_id) DO NOTHING; // Adjust based on your table's unique constraints and desired behavior
         `;
+        // Execute the query with the hardcoded userID
         const userResult = await pool.query(userInsertOrUpdateQuery, [userID]);
-        console.log('User inserted or updated in course_pruchases:');
+        console.log('User inserted or updated in course_purchases:', userResult);
 
-        // Step 2: Proceed to create Stripe Checkout session
+        // Proceed to create Stripe Checkout session with the hardcoded userID
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [{
@@ -57,11 +61,12 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 quantity: 1,
             }],
             mode: 'payment',
-            metadata: { userID },
+            metadata: { userID }, // Pass the hardcoded userID in metadata for tracking
             success_url: `https://www.app.dronedriver.com/success`,
-            cancel_url: `https://www.app.dronedriver.com/`,
+            cancel_url: `https://www.app.dronedriver.com/cancel`,
         });
 
+        // Respond with the session ID
         res.json({ id: session.id });
     } catch (error) {
         console.error("Error:", error);
