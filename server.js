@@ -35,13 +35,13 @@ app.post('/api/create-checkout-session', async (req, res) => {
     console.log('userID:', userID && userID);
 
     try {
-        // Step 1: Insert or update user in your database with hardcoded values
-        // const userInsertOrUpdateQuery = `
-        //     INSERT INTO course_purchases (user_id) VALUES ($1)
+        Step 1: Insert or update user in your database with hardcoded values
+        const userInsertOrUpdateQuery = `
+            INSERT INTO course_purchases (user_id) VALUES ($1)
             
-        // `;
-        // const userResult = await pool.query(userInsertOrUpdateQuery);
-        // console.log('User inserted or updated:');
+        `;
+        const userResult = await pool.query(userInsertOrUpdateQuery);
+        console.log('User inserted or updated:');
 
         // Step 2: Proceed to create Stripe Checkout session
         const session = await stripe.checkout.sessions.create({
