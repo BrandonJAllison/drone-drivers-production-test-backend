@@ -31,7 +31,7 @@ const port = process.env.PORT || 3001;
 
 app.post('/api/create-checkout-session', async (req, res) => {
    
-    const { userID} = req.body;
+    const userID = user?.attributes?.username;
     console.log('userID:', userID && userID);
 
     try {
@@ -57,6 +57,8 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 quantity: 1,
             }],
             mode: 'payment',
+            metadata: { userID },
+            customer_email: userEmail,
             success_url: `https://www.app.dronedriver.com/success`,
             cancel_url: `https://www.app.dronedriver.com/`,
         });
