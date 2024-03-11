@@ -172,6 +172,15 @@ app.get('/api/user/:userId', async (req, res) => {
 app.post('/api/test', (req, res) => {
     console.log('Received the followingpayload:', req.body); // Log the received payload
     res.status(200).json({ message: 'Payload received successfully', receivedPayload: req.body });
+
+    try {
+        // Assuming you have already connected to your database and have the `pool` variable set up correctly
+        const userInsertOrUpdateQuery = `
+            INSERT INTO course_purchases(user_id) VALUES ($1)
+        `;
+        // Execute the query with the hardcoded userID
+        const userResult = await pool.query(userInsertOrUpdateQuery, [userID]);
+        console.log('User inserted or updated in course_purchases:', userResult);
   });
 
 
