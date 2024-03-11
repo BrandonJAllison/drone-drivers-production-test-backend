@@ -32,7 +32,7 @@ const port = process.env.PORT || 3001;
 app.post('/api/create-checkout-session', async (req, res) => {
     // Hardcoded user ID and email for testing
    
-    const {userID} = req.body;
+    
 
     try {
         // Step 1: Insert or update user in your database with hardcoded values
@@ -164,41 +164,41 @@ app.get('/api/user/:userId', async (req, res) => {
 //     }
 // });
 
-// app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res) => {
-//     try {
-//         const event = JSON.parse(req.body);
+app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res) => {
+    try {
+        const event = JSON.parse(req.body);
 
-//         if (event.type === 'checkout.session.completed') {
-//             const session = event.data.object; // The checkout session object
-//             const userID = session.metadata.userID; // Retrieve userID from metadata
+        if (event.type === 'checkout.session.completed') {
+            const session = event.data.object; // The checkout session object
+            const userID = session.metadata.userID; // Retrieve userID from metadata
 
-//             // Now, use the userID to insert or update the user in your database
-//             // Assuming you have a logic to determine what other information needs to be updated/inserted
-//             const userEmail = session.customer_email; // Example of retrieving additional info from the session
+            // Now, use the userID to insert or update the user in your database
+            // Assuming you have a logic to determine what other information needs to be updated/inserted
+            const userEmail = session.customer_email; // Example of retrieving additional info from the session
 
-//             // SQL query to insert or update the user
-//             const queryText = `
-//                 INSERT INTO course_purchases (user_id, email) VALUES ($1, $2)
-//                 ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email
-//                 RETURNING *;
-//             `;
-//             const values = [userID, userEmail];
+            // SQL query to insert or update the user
+            const queryText = `
+                INSERT INTO course_purchases (user_id, email) VALUES ($1, $2)
+                ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email
+                RETURNING *;
+            `;
+            const values = [userID, userEmail];
 
-//             try {
-//                 const dbRes = await pool.query(queryText, values);
-//                 console.log('User created or updated from webhook:', dbRes.rows[0]);
-//                 res.json({received: true});
-//             } catch (dbErr) {
-//                 console.error('Database error:', dbErr);
-//                 res.status(500).json({error: 'Internal server error'});
-//             }
-//         } else {
-//             res.json({received: true});
-//         }
-//     } catch (err) {
-//         console.error('Webhook handling error:', err);
-//         res.status(400).send(`Webhook Error: ${err.message}`);
-//     }
-// });
+            try {
+                const dbRes = await pool.query(queryText, values);
+                console.log('User created or updated from webhook:', dbRes.rows[0]);
+                res.json({received: true});
+            } catch (dbErr) {
+                console.error('Database error:', dbErr);
+                res.status(500).json({error: 'Internal server error'});
+            }
+        } else {
+            res.json({received: true});
+        }
+    } catch (err) {
+        console.error('Webhook handling error:', err);
+        res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+});
 
 app.listen(port, () => console.log(`Server listening on port ${port}`));
