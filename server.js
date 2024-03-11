@@ -41,7 +41,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
             
         `;
         const userResult = await pool.query(userInsertOrUpdateQuery, [userID]);
-        console.log('User inserted or updated:');
+        console.log('User inserted or updated in course_pruchases:');
 
         // Step 2: Proceed to create Stripe Checkout session
         const session = await stripe.checkout.sessions.create({
