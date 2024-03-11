@@ -29,59 +29,21 @@ const pool = new Pool({
 
 const port = process.env.PORT || 3001;
 
-// app.post('/api/create-checkout-session', async (req, res) => {
-//     // Hardcoded user ID and email for testing
-   
-//     const userEmail = 'testUserEmail@example.com';
-
-//     try {
-//         // Step 1: Insert or update user in your database with hardcoded values
-//         const userInsertOrUpdateQuery = `
-//             INSERT INTO course_purchases (email) VALUES ($1)
-            
-//         `;
-//         const userResult = await pool.query(userInsertOrUpdateQuery, [userEmail]);
-//         console.log('User inserted or updated:', userResult.rows[0]);
-
-//         // Step 2: Proceed to create Stripe Checkout session
-//         const session = await stripe.checkout.sessions.create({
-//             payment_method_types: ['card'],
-//             line_items: [{
-//                 price_data: {
-//                     currency: 'usd',
-//                     product_data: {
-//                         name: 'Drone Drivers Part 107 Test Prep Course',
-//                     },
-//                     unit_amount: 13900, // Price in cents
-//                 },
-//                 quantity: 1,
-//             }],
-//             mode: 'payment',
-//             success_url: `https://www.app.dronedriver.com/success`,
-//             cancel_url: `https://www.app.dronedriver.com/`,
-//         });
-
-//         res.json({ id: session.id });
-//     } catch (error) {
-//         console.error("Error:", error);
-//         res.status(500).json({ error: error.message });
-//     }
-// });
-
 app.post('/api/create-checkout-session', async (req, res) => {
-    const { userID, userEmail } = req.body; // Assume these are passed from the frontend
+    // Hardcoded user ID and email for testing
+   
+    const userEmail = 'testUserEmail@example.com';
 
     try {
-        // Step 1: Insert or update user in your database
-        // Modify your query to use the userID for insert/update operation
+        // Step 1: Insert or update user in your database with hardcoded values
         const userInsertOrUpdateQuery = `
-            INSERT INTO course_purchases (user_id, email) VALUES ($1, $2)
-            ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email;
+            INSERT INTO course_purchases (email) VALUES ($1)
+            
         `;
-        const userResult = await pool.query(userInsertOrUpdateQuery, [userID, userEmail]);
+        const userResult = await pool.query(userInsertOrUpdateQuery, [userEmail]);
         console.log('User inserted or updated:', userResult.rows[0]);
 
-        // Step 2: Proceed to create Stripe Checkout session with metadata
+        // Step 2: Proceed to create Stripe Checkout session
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: [{
@@ -95,17 +57,55 @@ app.post('/api/create-checkout-session', async (req, res) => {
                 quantity: 1,
             }],
             mode: 'payment',
-            metadata: { userID }, // Include userID in session metadata for later reference
             success_url: `https://www.app.dronedriver.com/success`,
             cancel_url: `https://www.app.dronedriver.com/`,
         });
 
         res.json({ id: session.id });
     } catch (error) {
-        console.error("Error Creating Stripe Checkout:", error);
+        console.error("Error:", error);
         res.status(500).json({ error: error.message });
     }
 });
+
+// app.post('/api/create-checkout-session', async (req, res) => {
+//     const { userID, userEmail } = req.body; // Assume these are passed from the frontend
+
+//     try {
+//         // Step 1: Insert or update user in your database
+//         // Modify your query to use the userID for insert/update operation
+//         const userInsertOrUpdateQuery = `
+//             INSERT INTO course_purchases (user_id, email) VALUES ($1, $2)
+//             ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email;
+//         `;
+//         const userResult = await pool.query(userInsertOrUpdateQuery, [userID, userEmail]);
+//         console.log('User inserted or updated:', userResult.rows[0]);
+
+//         // Step 2: Proceed to create Stripe Checkout session with metadata
+//         const session = await stripe.checkout.sessions.create({
+//             payment_method_types: ['card'],
+//             line_items: [{
+//                 price_data: {
+//                     currency: 'usd',
+//                     product_data: {
+//                         name: 'Drone Drivers Part 107 Test Prep Course',
+//                     },
+//                     unit_amount: 13900, // Price in cents
+//                 },
+//                 quantity: 1,
+//             }],
+//             mode: 'payment',
+//             metadata: { userID }, // Include userID in session metadata for later reference
+//             success_url: `https://www.app.dronedriver.com/success`,
+//             cancel_url: `https://www.app.dronedriver.com/`,
+//         });
+
+//         res.json({ id: session.id });
+//     } catch (error) {
+//         console.error("Error Creating Stripe Checkout:", error);
+//         res.status(500).json({ error: error.message });
+//     }
+// });
 
 
 
