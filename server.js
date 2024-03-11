@@ -171,30 +171,38 @@ app.post('/api/test', (req, res) => {
   });
 
 
-app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res) => {
+  app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res) => {
     try {
         const event = JSON.parse(req.body);
 
         if (event.type === 'checkout.session.completed') {
             const session = event.data.object; // The checkout session object
             const userID = session.metadata.userID; // Retrieve userID from metadata
-            console.log (session.metadata);
+            const userEmail = session.customer_email; // Customer's email address
+            const amountPaid = session.amount_total; // Total amount paid
+            const sessionID = session.id; // Checkout session ID
+            const courseID = 'FAA107'; // Course ID
+            const hasPaid = true; // Since the checkout was completed successfully
 
-            // Now, use the userID to insert or update the user in your database
-            // Assuming you have a logic to determine what other information needs to be updated/inserted
-            const userEmail = session.customer_email; // Example of retrieving additional info from the session
+            console.log(session.metadata);
 
-            // SQL query to insert or update the user
+            // SQL query to insert or update the user's purchase record
             const queryText = `
-                INSERT INTO course_purchases (user_id, userEmail) VALUES ($1, $2)
-                ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email
+                INSERT INTO course_purchases (user_id, email, amount_paid, session_id, course_id, has_paid)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                ON CONFLICT (user_id) DO UPDATE SET
+                email = EXCLUDED.email,
+                amount_paid = EXCLUDED.amount_paid,
+                session_id = EXCLUDED.session_id,
+                course_id = EXCLUDED.course_id,
+                has_paid = EXCLUDED.has_paid
                 RETURNING *;
             `;
-            const values = [userID, userEmail];
+            const values = [userID, userEmail, amountPaid, sessionID, courseID, hasPaid];
 
             try {
                 const dbRes = await pool.query(queryText, values);
-                console.log('User created or updated from webhook:', dbRes.rows[0]);
+                console.log('User purchase record created or updated from webhook:', dbRes.rows[0]);
                 res.json({received: true});
             } catch (dbErr) {
                 console.error('Database error:', dbErr);
