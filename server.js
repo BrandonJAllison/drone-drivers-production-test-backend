@@ -32,16 +32,16 @@ const port = process.env.PORT || 3001;
 app.post('/api/create-checkout-session', async (req, res) => {
     // Hardcoded user ID and email for testing
    
-    
+    console.log('userID:', userID);
 
     try {
         // Step 1: Insert or update user in your database with hardcoded values
-        const userInsertOrUpdateQuery = `
-            INSERT INTO course_purchases (user_id) VALUES ($1)
+        // const userInsertOrUpdateQuery = `
+        //     INSERT INTO course_purchases (user_id) VALUES ($1)
             
-        `;
-        const userResult = await pool.query(userInsertOrUpdateQuery);
-        console.log('User inserted or updated:', userResult.rows[0]);
+        // `;
+        // const userResult = await pool.query(userInsertOrUpdateQuery);
+        // console.log('User inserted or updated:');
 
         // Step 2: Proceed to create Stripe Checkout session
         const session = await stripe.checkout.sessions.create({
@@ -114,7 +114,7 @@ app.get('/api/user/:userId', async (req, res) => {
     // res.json({ message: "Route hit successfully" });
     const { userId } = req.params;
     console.log("Received userID:", userId); // Confirming userID is received
-
+    
     try {
         const query = `
             SELECT * FROM course_purchases
