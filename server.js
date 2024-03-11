@@ -19,15 +19,15 @@ app.use(cors({
 const caCertificatePath = './ca-certificate.crt';
 const caCertificate = fs.readFileSync(caCertificatePath).toString();
 
-// const pool = new Pool({
-//   connectionString: process.env.DATABASE_URL, // Your database connection string
-//   ssl: {
-//     rejectUnauthorized: false, // This ensures that the certificate is verified
-//     ca: caCertificate // Provide the CA certificate for verification
-//   }
-// });
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL, // Your database connection string
+  ssl: {
+    rejectUnauthorized: false, // This ensures that the certificate is verified
+    ca: caCertificate // Provide the CA certificate for verification
+  }
+});
 
-// const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3001;
 
 // app.post('/api/create-checkout-session', async (req, res) => {
 //     // Hardcoded user ID and email for testing
