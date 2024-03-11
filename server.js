@@ -109,6 +109,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
 
 
 
+
 app.get('/api/user/:userId', async (req, res) => {
     // res.json({ message: "Route hit successfully" });
     const { userId } = req.params;
