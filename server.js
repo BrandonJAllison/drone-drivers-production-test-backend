@@ -32,7 +32,7 @@ const port = process.env.PORT || 3001;
 app.post('/api/create-checkout-session', async (req, res) => {
     // Hardcoded user ID and email for testing
    
-    const { userID} = req.body;
+    const {userID} = req.body;
 
     try {
         // Step 1: Insert or update user in your database with hardcoded values
