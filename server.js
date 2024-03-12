@@ -35,46 +35,6 @@ app.post('/api/create-checkout-session', async (req, res) => {
 
     try {
         // Assuming you have already connected to your database and have the `pool` variable set up correctly
-        const userInsertOrUpdateQuery = `
-            INSERT INTO course_purchases(user_id) VALUES ($1)
-        `;
-        // Execute the query with the userID passed from the frontend
-        const userResult = await pool.query(userInsertOrUpdateQuery, [userID]);
-        console.log('User inserted or updated in course_purchases:', userResult);
-
-        // Proceed to create Stripe Checkout session, passing the userID in metadata for tracking
-        const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card'],
-            line_items: [{
-                price_data: {
-                    currency: 'usd',
-                    product_data: {
-                        name: 'Drone Drivers Part 107 Test Prep Course',
-                    },
-                    unit_amount: 13900, // Price in cents
-                },
-                quantity: 1,
-            }],
-            mode: 'payment',
-            metadata: { userID },
-            success_url: `https://www.app.dronedriver.com/success`,
-            cancel_url: `https://www.app.dronedriver.com/cancel`,
-        });
-
-        // Respond with the session ID
-        res.json({ id: session.id });
-    } catch (error) {
-        console.error("Error:", error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-app.post('/api/create-checkout-session', async (req, res) => {
-    console.log('Received payload:', req.body); // Log the body
-    const { userID } = req.body; // Extract userID from the request body
-
-    try {
-        // Assuming you have already connected to your database and have the `pool` variable set up correctly
         // Updated query to insert user_id and set has_paid to true by default
         const userInsertOrUpdateQuery = `
             INSERT INTO course_purchases(user_id, has_paid) VALUES ($1, true)
@@ -102,6 +62,14 @@ app.post('/api/create-checkout-session', async (req, res) => {
             success_url: `https://www.app.dronedriver.com/success`,
             cancel_url: `https://www.app.dronedriver.com`,
         });
+
+        // Respond with the session ID
+        res.json({ id: session.id });
+    } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
 
         // Respond with the session ID
         res.json({ id: session.id });
