@@ -38,7 +38,6 @@ app.post('/api/create-checkout-session', async (req, res) => {
         // Updated query to insert user_id and set has_paid to true by default
         const userInsertOrUpdateQuery = `
             INSERT INTO course_purchases(user_id, has_paid) VALUES ($1, true)
-            ON CONFLICT (user_id) DO UPDATE SET has_paid = EXCLUDED.has_paid;
         `;
         // Execute the query with the userID passed from the frontend
         const userResult = await pool.query(userInsertOrUpdateQuery, [userID]);
