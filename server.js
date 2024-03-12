@@ -59,7 +59,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
             mode: 'payment',
             metadata: { userID }, // Pass the userID in metadata for tracking
             success_url: `https://www.app.dronedriver.com/success`,
-            cancel_url: `https://www.app.dronedriver.com`,
+            cancel_url: `https://www.app.dronedriver.com/`,
         });
 
         // Respond with the session ID
@@ -70,11 +70,60 @@ app.post('/api/create-checkout-session', async (req, res) => {
     }
 });
 
-        // Respond with the session ID
-        res.json({ id: session.id });
+// app.post('/wh-stripe', express.raw({type: 'application/json'}), async (req, res) => {
+//     console.log()
+//     try {
+//         // Assuming you've verified the webhook signature and parsed the event
+//         const event = JSON.parse(req.body);
+
+//         // For demonstration, let's say we react to a specific event type
+//         if (event.type === 'checkout.session.completed') {
+//             // Define the test email and any other info you want to insert
+//             const testEmail = "webhook@example.com";
+
+//             // SQL query to insert a new user
+//             const queryText = 'INSERT INTO course_purchases(email) VALUES($1) RETURNING *';
+//             const values = [testEmail];
+
+//             try {
+//                 const dbRes = await pool.query(queryText, values);
+//                 console.log('New user created:', dbRes.rows[0]);
+//                 // Respond to the webhook event
+//                 res.json({received: true});
+//             } catch (dbErr) {
+//                 console.error('Database error:', dbErr);
+//                 res.status(500).json({error: 'Internal server error'});
+//             }
+//         } else {
+//             // Handle other event types or ignore them
+//             res.json({received: true});
+//         }
+//     } catch (err) {
+//         console.error('Webhook handling error:', err);
+//         res.status(400).send(`Webhook Error: ${err.message}`);
+//     }
+// });
+
+
+
+
+app.get('/api/user/:userId', async (req, res) => {
+    // res.json({ message: "Route hit successfully" });
+    const { userId } = req.params;
+    console.log("Received userID:", userId); // Confirming userID is received
+    
+    try {
+        const query = `
+            SELECT * FROM course_purchases
+            WHERE user_id = $1;
+        `;
+        const { rows } = await pool.query(query, [userId]);
+
+        console.log(rows); // Log the query result to see what's being returned
+        res.json({ message: "Query executed successfully", data: rows });
     } catch (error) {
-        console.error("Error:", error);
-        res.status(500).json({ error: error.message });
+        console.error("Database query error:", error);
+        res.status(500).json({ error: "Internal server error detected", details: error.message });
     }
 });
 
